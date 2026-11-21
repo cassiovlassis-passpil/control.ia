@@ -1,0 +1,4 @@
+project_id = "financas-familia"
+
+[functions.audio-parse]
+verify_jwt = true
