@@ -10,7 +10,7 @@ The UI is based on draft PR #1 `cassiovlassis-passpil/control.ia`, source HEAD `
 - New single entries use `entries`; future one-off entries use `planned`. Recurrences and installments use `create_entry_series`, which materializes finite projected rows. Recurrence has an explicit end date; installments have 2–120 rows.
 - The audio dialog uses browser MediaRecorder permission, uploads to `/functions/v1/audio-parse`, and shows the returned transcript and editable draft. The endpoint is draft-only; cancel/close aborts in-flight work and does not save. Explicit confirmation inserts the reviewed entry.
 - Family onboarding uses `create_household` and asks for household/member display names. Owner invitation creation and acceptance use the invite RPCs and display-name input. New households receive essential categories from the migration; no category data is seeded by the frontend.
-- Edit controls appear only for entries created by the signed-in user, matching the frontend-side least-privilege choice; the repository also verifies that an update returned a row. RLS remains the server-side enforcement boundary.
+- Edit controls appear for household entries because the supplied migration's RLS permits household members to edit shared financial fields; immutable identity fields remain protected in the database. The repository also verifies that an update returned a row. RLS remains the server-side enforcement boundary.
 
 ## Validation and remaining constraints
 

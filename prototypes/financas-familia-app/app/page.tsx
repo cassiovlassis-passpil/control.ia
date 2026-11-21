@@ -24,6 +24,7 @@ export default function Home() {
   const [dateMode, setDateMode] = useState<'occurred' | 'due'>('occurred');
   const [householdId, setHouseholdId] = useState('');
   const [authenticated, setAuthenticated] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [noHousehold, setNoHousehold] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -103,6 +104,18 @@ export default function Home() {
       await load();
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Não foi possível entrar.'); }
   }
+  async function signUp(form: HTMLFormElement) {
+    const fields = new FormData(form);
+    try {
+      const { data: result, error: authError } = await getSupabase().auth.signUp({
+        email: String(fields.get('email')), password: String(fields.get('password')),
+        options: { emailRedirectTo: window.location.href },
+      });
+      if (authError) throw authError;
+      if (result.session) await load();
+      else setInviteStatus('Conta criada. Confirme seu e-mail pelo link enviado; o link do convite será preservado no retorno.');
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Não foi possível criar a conta.'); }
+  }
   async function signOut() { await getSupabase().auth.signOut(); setAuthenticated(false); setNoHousehold(false); setHouseholdId(''); setData(blank); }
   async function makeHousehold(form: HTMLFormElement) {
     const fields = new FormData(form);
@@ -116,6 +129,10 @@ export default function Home() {
       const url = new URL(window.location.href); url.searchParams.set('invite', token);
       setInviteLink(url.toString()); setInviteStatus('Convite criado. Copie e compartilhe o link com a pessoa convidada.');
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Não foi possível criar o convite.'); }
+  }
+  async function copyInviteLink() {
+    try { if (!navigator.clipboard) throw new Error('clipboard unavailable'); await navigator.clipboard.writeText(inviteLink); setInviteStatus('Link copiado.'); }
+    catch { setInviteStatus('Não foi possível copiar automaticamente. Selecione e copie o link exibido.'); }
   }
   async function acceptInvite(form?: HTMLFormElement) {
     if (!inviteToken) return;
@@ -151,14 +168,16 @@ export default function Home() {
       {authenticated && !noHousehold && <div className="toolbar">{data.households.length > 1 && <label>Família<select value={householdId} onChange={event => { setHouseholdId(event.target.value); setMember('all'); setCategory('all'); }} aria-label="Selecionar família">{data.households.map(home => <option key={home.id} value={home.id}>{home.name}</option>)}</select></label>}<label>Membro<select value={member} onChange={event => setMember(event.target.value)}><option value="all">Todos</option>{data.members.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><button className="button primary" onClick={() => { setEditing(null); setShowForm(true); }}>＋ Novo lançamento</button><button className="button secondary" onClick={() => void signOut()}>Sair</button></div>}
     </header>
 
-    {!authenticated && !loading && <section className="auth-card"><h1>Acesse sua família</h1><p>Entre com sua conta para carregar seus lançamentos.</p><form onSubmit={event => { event.preventDefault(); void signIn(event.currentTarget); }} className="auth-form"><label>E-mail<input type="email" name="email" autoComplete="username" required/></label><label>Senha<input type="password" name="password" autoComplete="current-password" required/></label><button className="button primary">Entrar</button></form></section>}
+    {!authenticated && !loading && <section className="auth-card"><h1>{authMode === 'login' ? 'Acesse sua família' : 'Criar conta'}</h1><p>{authMode === 'login' ? 'Entre com sua conta para carregar seus lançamentos.' : 'Crie sua conta; a confirmação de e-mail pode ser exigida antes de aceitar um convite.'}</p><form onSubmit={event => { event.preventDefault(); void (authMode === 'login' ? signIn(event.currentTarget) : signUp(event.currentTarget)); }} className="auth-form">{authMode === 'signup' && <label>Nome para exibição<input name="displayName" value={displayName} onChange={event => setDisplayName(event.target.value)} required maxLength={80}/></label>}<label>E-mail<input type="email" name="email" autoComplete="username" required/></label><label>Senha<input type="password" name="password" autoComplete={authMode === 'login' ? 'current-password' : 'new-password'} required/></label><button className="button primary">{authMode === 'login' ? 'Entrar' : 'Criar conta'}</button></form><button className="icon-button" onClick={() => { setError(''); setAuthMode(authMode === 'login' ? 'signup' : 'login'); }}>{authMode === 'login' ? 'Criar uma conta' : 'Já tenho uma conta'}</button></section>}
+    {!authenticated && inviteStatus && <p role="status" className="notice auth-notice">{inviteStatus}</p>}
+    {(!authenticated || noHousehold) && error && <div role="alert" className="error"><span>{error}</span><button className="button secondary" onClick={() => { setError(''); if (authenticated) void load(); }}>Tentar novamente</button></div>}
     {authenticated && noHousehold && <section className="auth-card"><h1>Configure sua família</h1><p>Não há uma família associada à conta. Crie uma ou entre por um convite.</p>{inviteToken && <form className="auth-form" onSubmit={event => { event.preventDefault(); void acceptInvite(event.currentTarget); }}><label>Seu nome na família<input name="inviteeName" value={inviteeName} onChange={event => setInviteeName(event.target.value)} required maxLength={80}/></label><button className="button primary">Validar e aceitar convite</button></form>}<form className="auth-form" onSubmit={event => { event.preventDefault(); void makeHousehold(event.currentTarget); }}><label>Seu nome de exibição<input name="displayName" value={displayName} onChange={event => setDisplayName(event.target.value)} required maxLength={80}/></label><label>Nome da família<input name="familyName" value={familyName} onChange={event => setFamilyName(event.target.value)} required maxLength={80}/></label><button className="button primary">Criar família</button></form></section>}
 
     {authenticated && !noHousehold && <>
       {inviteToken && <section className="invite-banner"><span>Este link contém um convite para outra família. Aceite para adicioná-la à sua conta.</span><form className="invite-form" onSubmit={event => { event.preventDefault(); void acceptInvite(event.currentTarget); }}><label>Seu nome na família<input name="inviteeName" value={inviteeName} onChange={event => setInviteeName(event.target.value)} required maxLength={80}/></label><button className="button secondary">Validar e aceitar</button></form></section>}
       <section className="filters" aria-label="Filtros do painel"><label>Categoria<select value={category} onChange={event => setCategory(event.target.value)}><option value="all">Todas as categorias</option><option value="uncategorized">Sem categoria</option>{data.categories.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><label>Data considerada<select value={dateMode} onChange={event => setDateMode(event.target.value as 'occurred' | 'due')}><option value="occurred">Compra/recebimento</option><option value="due">Vencimento</option></select></label><label>De<input aria-label="Data inicial" type="date" value={from} onChange={event => setFrom(event.target.value)}/></label><label>Até<input aria-label="Data final" type="date" value={to} onChange={event => setTo(event.target.value)}/></label><button className="button secondary" onClick={() => setAudioOpen(true)}>Lançar por áudio</button></section>
       {data.categories.length === 0 && !loading && <p className="notice">Esta família ainda não tem categorias. Você pode registrar lançamentos sem categoria.</p>}
-      {inviteStatus && <p className="notice" role="status">{inviteStatus}{inviteLink && <button className="button secondary" onClick={() => void navigator.clipboard.writeText(inviteLink).then(() => setInviteStatus('Link copiado.'))}>Copiar link</button>}</p>}
+      {inviteStatus && <div className="notice invite-result" role="status"><span>{inviteStatus}</span>{inviteLink && <><input aria-label="Link do convite" className="invite-link" readOnly value={inviteLink} onFocus={event => event.currentTarget.select()}/><button className="button secondary" onClick={() => void copyInviteLink()}>Copiar link</button></>}</div>}
       {error && <div className="error" role="alert"><span>{error}</span><button className="button secondary" onClick={() => void load()}>Tentar novamente</button></div>}
       {realtimeError && <p className="notice" role="status">{realtimeError}</p>}
       {loading ? <div className="loading" role="status" aria-live="polite">Carregando painel…</div> : <>
