@@ -1,4 +1,4 @@
-# Backend contract for Finanças Família
+# Backend contract for FinanÃ§as FamÃ­lia
 
 Source reviewed: draft PR #1, `cassiovlassis-passpil/control.ia`, `prototype/financas-familia`, HEAD `1782d1c919899fe5818302c27d036fcf77789824`. The PR is static sample data and explicitly has no persistence, real transcription, recurring schedule, or installment generation. The backend baseline lives in `migrations/20261121000100_financas_familia_core.sql`; it is isolated from the source repository and has not been applied remotely.
 
@@ -10,14 +10,14 @@ Source reviewed: draft PR #1, `cassiovlassis-passpil/control.ia`, `prototype/fin
 - Household creation and membership invitation/acceptance use restricted RPCs. Invitation acceptance requires a confirmed Auth email matching the invite and a live single-use UUID token.
 - `entries` is the shared family ledger. Any authenticated member can edit shared financial fields; `created_by`, `household_id` and generated-series identity are immutable. One-off rows can be deleted; generated schedule rows are cancelled or edited individually. `occurred_on` is the purchase/receipt date; nullable `due_on` is the due date. `entry_kind` is `credit | debit`; `status` is `planned | posted | cancelled`.
 - Members are keyed by `(household_id, user_id)`. `display_name` is presentation only and never grants access; Auth user ID remains the stable `member_id` used by entries and the UI.
-- `entry_series` stores finite recurrence/installment definitions. `create_entry_series` atomically materializes planned entries: installments 2–120; recurrences have a finite end date and at most 120 occurrences. Current recurrence units are week, month, year. Edit/delete of a whole series is not implemented.
+- `entry_series` stores finite recurrence/installment definitions. `create_entry_series` atomically materializes planned entries: installments 2â€“120; recurrences have a finite end date and at most 120 occurrences. Current recurrence units are week, month, year. Edit/delete of a whole series is not implemented.
 - `categories.entry_kind` is `credit | debit`. Household creation seeds essential expense and income categories.
 - `entry_aggregates` is a `security_invoker` view grouped by household, occurrence date, due date, member, category, kind and status. Filter `entries` or this view by household plus the selected `occurred_on` or `due_on` range, member and category. RLS remains active on the underlying rows.
 - If `supabase_realtime` exists, the migration adds `public.entries` to it. The frontend still must subscribe and apply its household/date/member/category filters to incoming changes.
 
 ## Frontend contract
 
-`getDashboard` may query `household_members(household_id,user_id,display_name,joined_at)`, `categories(id,household_id,name,entry_kind)`, and `entries(id,household_id,member_id,category_id,series_id,installment_number,installment_count,entry_kind,status,amount,description,occurred_on,due_on)`. Member display labels must come from `display_name` (the existing UI's generated “Você/Membro N” fallback may be used until it reads this column). Categories are seeded at household creation.
+`getDashboard` may query `household_members(household_id,user_id,display_name,joined_at)`, `categories(id,household_id,name,entry_kind)`, and `entries(id,household_id,member_id,category_id,series_id,installment_number,installment_count,entry_kind,status,amount,description,occurred_on,due_on)`. Member display labels must come from `display_name` (the existing UI's generated â€œVocÃª/Membro Nâ€ fallback may be used until it reads this column). Categories are seeded at household creation.
 
 For one-off entries, insert into `entries` after the user confirms. Omit `created_by`; the database default reads `auth.uid()`. Do not accept a client-supplied household ID as proof of access. Select the household from the user's membership and let RLS validate it again. Existing row updates/deletes are limited to the entry creator. There is no series edit/delete workflow yet.
 
@@ -68,9 +68,9 @@ Audio parse is draft-only: it never writes a row. The UI must show the transcrip
 Configure these Edge Function environment values in the dedicated project:
 
 - `SUPABASE_URL` (project URL)
-- `SUPABASE_PUBLISHABLE_KEY` (publishable API key; not a service-role key)
+- A Supabase publishable API key, taken from the built-in `SUPABASE_PUBLISHABLE_KEYS` environment map (fallbacks: `SUPABASE_ANON_KEY` or local `SUPABASE_PUBLISHABLE_KEY`); never a service-role key
 - `OPENAI_API_KEY` (secret, server-side only)
-- `OPENAI_PARSE_MODEL` (model supporting Responses API Structured Outputs)
+- `OPENAI_MODEL` (model supporting Responses API Structured Outputs; legacy `OPENAI_PARSE_MODEL` remains a fallback)
 - `OPENAI_TRANSCRIBE_MODEL` (optional; defaults to current `gpt-transcribe`)
 - `APP_ORIGIN` (exact allowed browser origin, for example `https://app.example.invalid`)
 - `APP_TIME_ZONE` (optional; defaults to `America/Sao_Paulo`)
@@ -79,12 +79,12 @@ The Edge Function sends the uploaded audio to OpenAI `/v1/audio/transcriptions`,
 
 ## Remaining integration decisions and limits
 
-- This migration is a proposed isolated baseline, not a verified production schema. It must be reviewed and tested on a disposable local Supabase stack before any hosted migration.
-- The migration and Edge Function have not been executed in Supabase/Deno. The host has no Supabase CLI, Node/npm or Deno; only static Python checks are possible here.
+- This migration is the isolated family baseline applied to the dedicated project. Static guardrails pass, but cross-household RLS has not been exercised with two live users.
+- The dedicated project has the migration applied and `audio-parse` active. Provider secret provisioning and an authenticated audio test remain pending.
 - Add display-name collection to household creation/invitation onboarding. Existing `create_household` keeps a default fallback for caller compatibility; pass `p_display_name` to set it.
 - UI needs date-axis selection and filters for `occurred_on` vs `due_on`, and must include `due_on` on one-off inserts and the `p_due_on` RPC argument. Existing UI files are being refactored concurrently; this contract documents the backend side.
 - Configure app origin and secrets, select a parse-capable model, test cost/rate controls, auth flows, RLS cross-household negatives, backups/retention, realtime subscriptions and OpenAI data terms before real users. The function does not yet implement per-user rate limits or spend caps.
-- No hosted database, function, secrets, deployment, commit, or pull request was changed by this work.
+- The hosted migration and `audio-parse` were applied after the original review. No production deployment or alias change was made; PR #2 remains a draft.
 
 ## Local checks
 
@@ -95,3 +95,4 @@ From this folder, run `py -3 -B -m unittest discover -s tests -v`. This verifies
 - Supabase [RLS guide](https://supabase.com/docs/guides/database/postgres/row-level-security) and [API keys guide](https://supabase.com/docs/guides/getting-started/api-keys).
 - Supabase [CLI v3 changelog](https://supabase.com/changelog/supabase-cli-v3): hosted-change confirmation/local-first behavior was checked; no CLI or remote command was run.
 - OpenAI [audio transcription](https://developers.openai.com/api/docs/guides/speech-to-text) and [Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs) guides. The transcription endpoint defaults to the current `gpt-transcribe` model; the parse model is configurable.
+
