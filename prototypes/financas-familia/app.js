@@ -1,25 +1,23 @@
 const days = ['seg','ter','qua','qui','sex','sab','dom'];
-const credVals = [40,60,30,80,50,20,70];
-const debVals = [30,45,25,60,40,15,50];
+let credVals = [40,60,30,80,50,20,70];
+let debVals = [30,45,25,60,40,15,50];
 
 function renderCharts(){
   const c = document.getElementById('chartDays');
   c.innerHTML = '';
   days.forEach((d,i)=>{
-    const g = document.createElement('div'); g.className='bar-group';
-    const cb = document.createElement('div'); cb.className='bar'; cb.style.height=credVals[i]+'%';
-    const db = document.createElement('div'); db.className='bar debit'; db.style.height=debVals[i]+'%';
-    const s = document.createElement('span'); s.textContent=d;
     const wrap = document.createElement('div'); wrap.style.display='flex'; wrap.style.flexDirection='column'; wrap.style.alignItems='center'; wrap.style.flex='1'; wrap.style.gap='2px';
     const pair = document.createElement('div'); pair.style.display='flex'; pair.style.gap='2px'; pair.style.alignItems='flex-end'; pair.style.height='140px'; pair.style.width='100%';
-    cb.style.width='50%'; db.style.width='50%';
+    const cb = document.createElement('div'); cb.className='bar'; cb.style.height=credVals[i]+'%'; cb.style.width='50%';
+    const db = document.createElement('div'); db.className='bar debit'; db.style.height=debVals[i]+'%'; db.style.width='50%';
+    const s = document.createElement('span'); s.textContent=d;
     pair.appendChild(cb); pair.appendChild(db);
     wrap.appendChild(pair); wrap.appendChild(s);
     c.appendChild(wrap);
   });
 }
 
-const txs = [
+let txs = [
   {desc:'Salário',who:'Maria',val:'+ R$ 4.800,00',cls:'credit'},
   {desc:'Supermercado',who:'João',val:'- R$ 280,00',cls:'debit'},
   {desc:'Netflix (assinatura)',who:'Família',val:'- R$ 39,90',cls:'debit'},
@@ -27,8 +25,34 @@ const txs = [
 ];
 function renderTx(){
   const ul = document.getElementById('listTx');
-  ul.innerHTML = txs.map(t=>`<li><div>${t.desc}<div class="m">${t.who}</div></div><div class="${t.cls}">${t.val}</div></li>`).join('');
+  ul.innerHTML = txs.map(t=>'<li><div>'+t.desc+'<div class="m">'+t.who+'</div></div><div class="'+t.cls+'">'+t.val+'</div></li>').join('');
 }
+
+document.querySelectorAll('.member[contenteditable="true"]').forEach(b=>{
+  b.addEventListener('blur',()=>{
+    const name = b.textContent.trim() || b.dataset.member;
+    b.textContent = name;
+  });
+  b.addEventListener('keydown',(e)=>{
+    if(e.key==='Enter'){ e.preventDefault(); b.blur(); }
+  });
+});
+
+document.getElementById('addMemberBtn').addEventListener('click',()=>{
+  const name = prompt('Nome do novo membro:');
+  if(!name || !name.trim()) return;
+  const key = name.trim().toLowerCase().replace(/\s+/g,'-');
+  const btn = document.createElement('button');
+  btn.className = 'member';
+  btn.dataset.member = key;
+  btn.contentEditable = 'true';
+  btn.spellcheck = false;
+  btn.textContent = name.trim();
+  btn.addEventListener('blur',()=>{ const n=btn.textContent.trim()||key; btn.textContent=n; });
+  btn.addEventListener('keydown',(e)=>{ if(e.key==='Enter'){e.preventDefault();btn.blur();} });
+  const nav = document.querySelector('.members');
+  nav.insertBefore(btn, document.getElementById('addMemberBtn'));
+});
 
 document.querySelectorAll('.member').forEach(b=>{
   b.addEventListener('click',()=>{
@@ -54,6 +78,19 @@ document.getElementById('confirmTx').addEventListener('click',()=>{
   txs.unshift({desc:'Mercado (áudio)',who:'João',val:'- R$ 45,00',cls:'debit'});
   renderTx();
   modal.hidden=true;
+});
+
+document.getElementById('resetBtn').addEventListener('click',()=>{
+  if(!confirm('Zerar todos os créditos e débitos? Esta ação não pode ser desfeita.')) return;
+  credVals = credVals.map(()=>0);
+  debVals = debVals.map(()=>0);
+  txs = [];
+  document.getElementById('saldo').textContent = 'R$ 0,00';
+  document.getElementById('cred').textContent = 'R$ 0,00';
+  document.getElementById('deb').textContent = 'R$ 0,00';
+  document.getElementById('parc').textContent = 'R$ 0,00';
+  renderCharts();
+  renderTx();
 });
 
 renderCharts();
