@@ -10,6 +10,9 @@ body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:v
 .member[contenteditable="true"]:focus{outline:2px solid var(--accent);outline-offset:2px}
 .add-member{border-style:dashed;color:var(--muted)}
 .add-member:hover{color:var(--text);border-color:var(--accent)}
+.member .remove-btn{display:none;position:absolute;top:-6px;right:-6px;width:16px;height:16px;border-radius:50%;background:var(--debit);color:#fff;border:none;font-size:10px;line-height:16px;cursor:pointer;padding:0}
+.member:hover .remove-btn{display:block}
+.member{position:relative}
 .reset-bar{margin-top:16px;text-align:center}
 .reset-btn{background:transparent;border:1px solid var(--debit);color:var(--debit);padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px}
 .reset-btn:hover{background:var(--debit);color:#0f1216}

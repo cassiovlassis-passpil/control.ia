@@ -29,9 +29,30 @@ function renderTx(){
 }
 
 document.querySelectorAll('.member[contenteditable="true"]').forEach(b=>{
+  const rm = document.createElement('button');
+  rm.className = 'remove-btn';
+  rm.textContent = '×';
+  rm.title = 'Remover membro';
+  rm.addEventListener('click',(e)=>{
+    e.stopPropagation();
+    if(!confirm('Remover membro "'+b.textContent.replace('×','').trim()+'"?')) return;
+    b.remove();
+  });
+  b.appendChild(rm);
+
   b.addEventListener('blur',()=>{
-    const name = b.textContent.trim() || b.dataset.member;
+    const name = b.textContent.replace('×','').trim() || b.dataset.member;
     b.textContent = name;
+    const rm2 = document.createElement('button');
+    rm2.className = 'remove-btn';
+    rm2.textContent = '×';
+    rm2.title = 'Remover membro';
+    rm2.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      if(!confirm('Remover membro "'+b.textContent.replace('×','').trim()+'"?')) return;
+      b.remove();
+    });
+    b.appendChild(rm2);
   });
   b.addEventListener('keydown',(e)=>{
     if(e.key==='Enter'){ e.preventDefault(); b.blur(); }
@@ -48,7 +69,30 @@ document.getElementById('addMemberBtn').addEventListener('click',()=>{
   btn.contentEditable = 'true';
   btn.spellcheck = false;
   btn.textContent = name.trim();
-  btn.addEventListener('blur',()=>{ const n=btn.textContent.trim()||key; btn.textContent=n; });
+  const rm = document.createElement('button');
+  rm.className = 'remove-btn';
+  rm.textContent = '×';
+  rm.title = 'Remover membro';
+  rm.addEventListener('click',(e)=>{
+    e.stopPropagation();
+    if(!confirm('Remover membro "'+btn.textContent.replace('×','').trim()+'"?')) return;
+    btn.remove();
+  });
+  btn.appendChild(rm);
+  btn.addEventListener('blur',()=>{
+    const n = btn.textContent.replace('×','').trim()||key;
+    btn.textContent = n;
+    const rm2 = document.createElement('button');
+    rm2.className = 'remove-btn';
+    rm2.textContent = '×';
+    rm2.title = 'Remover membro';
+    rm2.addEventListener('click',(e)=>{
+      e.stopPropagation();
+      if(!confirm('Remover membro "'+btn.textContent.replace('×','').trim()+'"?')) return;
+      btn.remove();
+    });
+    btn.appendChild(rm2);
+  });
   btn.addEventListener('keydown',(e)=>{ if(e.key==='Enter'){e.preventDefault();btn.blur();} });
   const nav = document.querySelector('.members');
   nav.insertBefore(btn, document.getElementById('addMemberBtn'));
