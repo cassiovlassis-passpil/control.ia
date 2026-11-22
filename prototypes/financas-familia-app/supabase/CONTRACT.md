@@ -83,7 +83,7 @@ The Edge Function sends the uploaded audio to OpenAI `/v1/audio/transcriptions`,
 - The dedicated project has the migration applied and `audio-parse` active. Provider secret provisioning and an authenticated audio test remain pending.
 - Add display-name collection to household creation/invitation onboarding. Existing `create_household` keeps a default fallback for caller compatibility; pass `p_display_name` to set it.
 - UI needs date-axis selection and filters for `occurred_on` vs `due_on`, and must include `due_on` on one-off inserts and the `p_due_on` RPC argument. Existing UI files are being refactored concurrently; this contract documents the backend side.
-- Configure app origin and secrets, select a parse-capable model, test cost/rate controls, auth flows, RLS cross-household negatives, backups/retention, realtime subscriptions and OpenAI data terms before real users. The function does not yet implement per-user rate limits or spend caps.
+- Secrets and model are configured in the dedicated project. Before real users, test authenticated audio, cross-household RLS, cost/rate controls, backups/retention, realtime subscriptions and OpenAI data terms. The function does not yet implement per-user rate limits or spend caps.
 - The hosted migration and `audio-parse` were applied after the original review. No production deployment or alias change was made; PR #2 remains a draft.
 
 ## Local checks
