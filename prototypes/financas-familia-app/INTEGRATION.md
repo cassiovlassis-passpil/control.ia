@@ -5,7 +5,7 @@ The UI is based on draft PR #1 `cassiovlassis-passpil/control.ia`, source HEAD `
 ## Hosted integration status (2026-11-22)
 
 - Supabase project `ACOMPANH.AI` (`dhubfibzsrzxyfohrhoc`) is active; migration `financas_familia_core` is applied.
-- `audio-parse` is active with JWT verification enabled. Version 3 reads `OPENAI_MODEL` (with legacy `OPENAI_PARSE_MODEL` fallback) and accepts the built-in publishable-key environment map.
+- `audio-parse` is active with JWT verification enabled. Its deployed code reads `OPENAI_MODEL` (with legacy `OPENAI_PARSE_MODEL` fallback) and accepts the built-in publishable-key environment map.
 - Secrets `OPENAI_API_KEY`, `OPENAI_MODEL=gpt-6-luna` and `APP_ORIGIN=https://financas-familia-prototipo.vercel.app` are configured server-side; no secret value is in this repository.
 - HTTP smoke checks: allowed-origin preflight returned 204, an unapproved origin returned 403, and a POST without a user session returned 401. The OpenAI account exposes `gpt-6-luna`.
 - The Vercel project `financas-familia-prototipo` has no configured environment variables. PR #2 remains a draft; no production deployment or alias change was made.
@@ -23,7 +23,7 @@ The UI is based on draft PR #1 `cassiovlassis-passpil/control.ia`, source HEAD `
 ## Validation and remaining constraints
 
 - `npm run typecheck`, `npm run build` and `py -3 -B -m unittest discover -s tests -v` pass locally; the Python suite is static guardrail coverage (5 tests), not live RLS testing.
-- Supabase accepted and activated Edge Function version 3. The Next.js `tsconfig.json` excludes `supabase/functions`; no separate local Deno check was run.
+- Supabase accepted the Edge Function and it is active. The Next.js `tsconfig.json` excludes `supabase/functions`; no separate local Deno check was run.
 - A successful authenticated audio request has not been tested. It needs a test login in the dedicated project; no matching login is saved in the OpenBot Vault. The parser remains draft-only until the user confirms the returned fields.
 - Before real users, verify cross-household RLS, Auth email confirmation, Realtime availability, rate/cost limits, backup/retention and the data-processing terms for sending audio/transcripts to OpenAI.
 
